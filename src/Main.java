@@ -1,20 +1,27 @@
 import javafx.application.Application;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class Main extends Application {
     public static void main(String[] args) {launch(args);}
 
     @Override
     public void start(Stage stage) {
+        Label texte = new Label("Bienvenu  dans le modificateur d'image.");
+
         Menu fichier = new Menu("Fichiers");
         Menu action = new Menu("Actions");
         Menu charger = new Menu("Charger une image");
@@ -24,18 +31,9 @@ public class Main extends Application {
         Image image2 = new Image("image2.jpg");
         Image image3 = new Image("image3.jpg");
 
-        ImageView imageViewDefault = new ImageView(image);
-        imageViewDefault.setFitWidth(500);
-        imageViewDefault.setPreserveRatio(true);
-        ImageView imageView1 = new ImageView(image1);
-        imageView1.setFitWidth(500);
-        imageView1.setPreserveRatio(true);
-        ImageView imageView2 = new ImageView(image2);
-        imageView2.setFitWidth(500);
-        imageView2.setPreserveRatio(true);
-        ImageView imageView3 = new ImageView(image3);
-        imageView3.setFitWidth(500);
-        imageView3.setPreserveRatio(true);
+        ImageView imageview =new ImageView(image);
+        imageview.setFitWidth(500);
+        imageview.setPreserveRatio(true);
 
         MenuItem reinitialise = new MenuItem("Réinitialiser");
         MenuItem photo1 = new MenuItem("Image #1");
@@ -51,33 +49,92 @@ public class Main extends Application {
 
         Label lumiere= new Label("Luminosité");
         Slider luminosite = new Slider(-1,1,0);
+        Tooltip tp = new Tooltip("Rend l'image plus clair ou plus sombre");
+        luminosite.setTooltip(tp);
         luminosite.setMaxWidth(140);
         Label contraste = new Label("Contraste");
+        Tooltip tp1 = new Tooltip("Diminue ou augmente la différence entre les couleurs");
         Slider con = new Slider(-1,1,0);
+        con.setTooltip(tp1);
         con.setMaxWidth(140);
         Label teinte = new Label("Teinte");
         Slider teint = new Slider(-1,1,0);
+        Tooltip tp2 = new Tooltip("Change la teinte (couleur) de l'image");
+        teint.setTooltip(tp2);
         teint.setMaxWidth(140);
         Label saturation = new Label("Saturation");
         Slider satu = new Slider(-1,1,0);
+        Tooltip tp3= new Tooltip("Diminue ou augmente l'intensité des couleurs");
+        satu.setTooltip(tp3);
         satu.setMaxWidth(140);
         VBox vb = new VBox(lumiere,luminosite,contraste,con,teinte,teint,saturation,satu);
         vb.setAlignment(Pos.CENTER);
 
+        AtomicInteger chiffre= new AtomicInteger();
+        chiffre.set(0);
+        photo1.setOnAction((event)->{
+            chiffre.set(1);
+            imageview.setImage(image1);
+            texte.setText("image 1 chargée");
+        });
+        photo2.setOnAction((event)->{
+            chiffre.set(2);
+            imageview.setImage(image2);
+            texte.setText("image 2 chargée");
+        });
+        photo3.setOnAction((event)->{
+            chiffre.set(3);
+            imageview.setImage(image3);
+            texte.setText("image 3 chargée");
+        });
+        ColorAdjust coloradjust = new ColorAdjust();
+         luminosite.valueProperty().addListener(ov->{
+             coloradjust.setBrightness(luminosite.getValue());
+             imageview.setEffect(coloradjust);
+         });
+         con.valueProperty().addListener(ov->{
+             coloradjust.setContrast(con.getValue());
+             imageview.setEffect(coloradjust);
+         });
+         teint.valueProperty().addListener(ov->{
+             coloradjust.setHue(teint.getValue());
+             imageview.setEffect(coloradjust);
+         });
+         satu.valueProperty().addListener(ov->{
+             coloradjust.setSaturation(satu.getValue());
+             imageview.setEffect(coloradjust);
+         });
+         reinitialise.setOnAction((event)->{
+             luminosite.setValue(0);
+             con.setValue(0);
+             teint.setValue(0);
+             satu.setValue(0);
+             texte.setText("Réinitialisation des ajustement de couleur");
+         });
+         ContextMenu ct = new ContextMenu(fichier,action);
+        imageview.setOnContextMenuRequested(event -> ct.show(imageview, event.getScreenX(), event.getScreenY()));
 
-        HBox hb = new HBox(imageViewDefault,vb);
+
+
+
+        HBox hb = new HBox(imageview,vb);
         hb.setAlignment(Pos.CENTER);
         hb.setSpacing(10);
-
-        Label texte = new Label("Bienvenu  dans le modificateur d'image.");
 
 
         stage.setMaximized(true);
         BorderPane root = new BorderPane();
+        Scene scene = new Scene(root);
+        /*scene.setOnContextMenuRequested((ContextMenuEvent event) -> {
+            ct.show(stage), event.getScreenX(), event.getScreenY())
+        });
+        Il ne marche pas car le context menu dans la Menu bar est repris à la dernière place ou le clique droit a été fait.
+        */
         root.setTop(mb);
         root.setCenter(hb);
         root.setBottom(texte);
-        stage.setScene(new Scene(root));
+        stage.setScene(scene);
         stage.show();
     }
+
 }
